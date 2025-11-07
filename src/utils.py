@@ -1,5 +1,6 @@
 import numpy as np
 
+
 def one_hot(y, num_classes):
 	y = np.array(y).astype(int)
 	return np.eye(num_classes)[y]
@@ -7,6 +8,12 @@ def one_hot(y, num_classes):
 def normalize(X):
 	X = np.array(X)
 	return (X - X.mean()) / X.std()
+
+def standard_scale(data):
+    mean = np.mean(data, axis=0)
+    std = np.std(data, axis=0)
+    std = np.where(std == 0, 1, std)
+    return (data - mean) / std, mean, std
 
 def train_val_test_split(X, y, train_ratio=0.7, val_ratio=0.15, test_ratio=0.15, seed=None):
 	assert abs(train_ratio + val_ratio + test_ratio - 1.0) < 1e-6
@@ -33,3 +40,4 @@ def get_batches(X, y, batch_size, shuffle=True, seed=None):
 	for i in range(0, n, batch_size):
 		batch_idx = idx[i:i+batch_size]
 		yield X[batch_idx], y[batch_idx]
+		

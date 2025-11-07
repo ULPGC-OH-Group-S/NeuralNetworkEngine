@@ -1,13 +1,18 @@
 import numpy as np
 
+
 class SGD:
-	def __init__(self, learning_rate=0.01, momentum=0.0, weight_decay=0.0):
-		self.lr = learning_rate
+	
+	def __init__(self, lr=0.01, momentum=0.0, weight_decay=0.0, lr_scheduler=None):
+		self.lr = lr
 		self.momentum = momentum
 		self.weight_decay = weight_decay
 		self.v = {}
+		self.lr_scheduler = lr_scheduler
 
 	def update(self, params, grads):
+		if self.lr_scheduler:
+			self.lr = self.lr_scheduler.step()
 		for i, (p, g) in enumerate(zip(params, grads)):
 			if self.weight_decay != 0.0:
 				g = g + self.weight_decay * p
@@ -19,19 +24,27 @@ class SGD:
 			else:
 				p -= self.lr * g
 
+
 class Adam:
-	def __init__(self, lr=0.001, beta1=0.9, beta2=0.999, eps=1e-8):
+	
+	def __init__(self, lr=0.001, beta1=0.9, beta2=0.999, eps=1e-8, weight_decay=0.0, lr_scheduler=None):
 		self.lr = lr
 		self.beta1 = beta1
 		self.beta2 = beta2
 		self.eps = eps
+		self.weight_decay = weight_decay
 		self.m = {}
 		self.v = {}
 		self.t = 0
+		self.lr_scheduler = lr_scheduler
 
 	def update(self, params, grads):
 		self.t += 1
+		if self.lr_scheduler:
+			self.lr = self.lr_scheduler.step()
 		for i, (p, g) in enumerate(zip(params, grads)):
+			if self.weight_decay != 0.0:
+				g = g + self.weight_decay * p
 			if i not in self.m:
 				self.m[i] = np.zeros_like(g)
 				self.v[i] = np.zeros_like(g)
@@ -40,3 +53,6 @@ class Adam:
 			m_hat = self.m[i] / (1 - self.beta1 ** self.t)
 			v_hat = self.v[i] / (1 - self.beta2 ** self.t)
 			p -= self.lr * m_hat / (np.sqrt(v_hat) + self.eps)
+
+
+
