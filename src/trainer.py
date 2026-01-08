@@ -29,7 +29,7 @@ class Trainer:
         self.optimizer = optimizer
         self.loss_fn = loss_fn
 
-    def train(self, X_train, y_train, X_val=None, y_val=None, epochs=10, batch_size=64, patience=15):
+    def train(self, X_train, y_train, X_val=None, y_val=None, epochs=10, batch_size=64, patience=15, augmenter=None):
         """
         Execute the complete training loop with optional validation and early stopping.
 
@@ -45,6 +45,7 @@ class Trainer:
             epochs (int): Maximum number of training epochs. Default is 10.
             batch_size (int): Size of mini-batches for gradient computation. Default is 64.
             patience (int): Early stopping patience (epochs without improvement). Default is 15.
+            augmenter (ImageAugmentation, optional): Data augmentation object for training batches
 
         Returns:
             tuple: (train_losses, val_losses) - Lists of loss values per epoch
@@ -55,12 +56,18 @@ class Trainer:
         train_losses = []
         val_losses = []
 
+        num_batches = len(list(get_batches(X_train, y_train, batch_size)))
+
         # Main training loop
         for epoch in range(epochs):
             losses = []
 
             # Mini-batch training
-            for X_batch, y_batch in get_batches(X_train, y_train, batch_size):
+            for batch_idx, (X_batch, y_batch) in enumerate(get_batches(X_train, y_train, batch_size), 1):
+                # Apply data augmentation if provided
+                if augmenter is not None:
+                    X_batch = augmenter.augment_batch(X_batch)
+                
                 # Forward pass: compute predictions and loss
                 out = self.network.forward(X_batch)
                 loss = self.loss_fn.forward(out, y_batch)
@@ -74,6 +81,8 @@ class Trainer:
                 self.network.zero_grad()
 
                 losses.append(loss)
+
+                print(f"Epoch {epoch+1}, Batch {batch_idx}/{num_batches}, Batch loss: {loss:.4f}")
 
             # Compute average training loss for this epoch
             train_loss = np.mean(losses)
